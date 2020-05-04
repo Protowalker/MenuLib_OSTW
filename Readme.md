@@ -2,3 +2,6 @@ A library for easily adding menus to your gamemodes. Check the example file to s
 
 Currently requires a custom version of OSTW available at https://github.com/pielover928/Overwatch-Script-To-Workshop
 This readme will change when OSTW is updated to not require this fork.
+
+
+By using `SingleHUDMenu` instead of `Menu`, you can trade element count for HUD count.
