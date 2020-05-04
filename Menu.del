@@ -2,18 +2,18 @@ import "Trigger.del";
 
 //Menus
 
-globalvar define stringConstants = ["", "\r\n"];
+public define stringConstants: ["", "\r\n"];
 
 struct SingleHUDMenu : Menu {
 
-    define HUDOption(ref define index): <"<0><1><2>", currentOptionIndex==index?IconString(Icon.ArrowRight):root.stringConstants[0], (options[index] != root.stringConstants[0]) ? options[index].DisplayName:root.stringConstants[0], options[index+1] != root.stringConstants[0] ? root.stringConstants[1] : root.stringConstants[0]>;
-    define HUDTextChunk(ref define first, ref define second, ref define third): <"<0><1><2>", first, second, third>;
+    define HUDOption(ref define index): <"<0><1><2>", currentOptionIndex==index ? IconString(Icon.ArrowRight) : root.stringConstants[0], (options[index] != root.stringConstants[0]) ? options[index].DisplayName:root.stringConstants[0], options[index+1] != root.stringConstants[0] ? root.stringConstants[1] : root.stringConstants[0]>;
+    define HUDTextChunk(ref define first = null, ref define second = null, ref define third = null): <"<0><1><2>", first, second, third>;
 
 
     define valueCount = 0;
 
     public SingleHUDMenu(ref define player){
-        for(define i = 0; i < 25; i++){
+        for(define i = 0; i < 18; i++){
             options[i] = "";
         }
         subscribedPlayer = player;
@@ -69,7 +69,7 @@ struct SingleHUDMenu : Menu {
 struct Menu {
     public MenuOption[] options = [];
 
-    public MenuOptionValue CurrentOptionValue: CurrentOption.CurrentValue;
+    public AbstractMenuOptionValue CurrentOptionValue: CurrentOption.CurrentValue;
     public MenuOption CurrentOption: options[currentOptionIndex];
 
     public define currentOptionIndex;
@@ -115,7 +115,7 @@ struct Menu {
 //     List
 //}
 
-class MenuListOption : MenuOption {
+struct MenuListOption : MenuOption {
 
     public MenuOptionValue[] values = [];
 
@@ -156,7 +156,7 @@ class MenuListOption : MenuOption {
 
 }
 
-class MenuFloatOption : MenuOption {
+struct MenuFloatOption : MenuOption {
 
     private MenuOptionValue value;
     public override MenuOptionValue CurrentValue: value;
@@ -182,7 +182,7 @@ class MenuFloatOption : MenuOption {
 
 }
 
-class MenuButtonOption : MenuOption {
+struct MenuButtonOption : MenuOption {
 
     private MenuTriggerValue value;
 
@@ -203,7 +203,7 @@ class MenuButtonOption : MenuOption {
 
 }
 
-class MenuOption {
+struct MenuOption {
 
     public define index;
     public define textId;
@@ -211,7 +211,7 @@ class MenuOption {
 
     public virtual define DisplayName: null;
 
-    public virtual MenuOptionValue CurrentValue: null;
+    public virtual AbstractMenuOptionValue CurrentValue: null;
 
     public virtual void SetCurrentValue(ref define newVal){
     }
@@ -229,10 +229,7 @@ struct MenuTriggerValue : AbstractMenuOptionValue {
 
     public define IsActive: trigger.IsActive;
 
-    //public override define Value: trigger.IsActive;
-
-
-    public MenuTriggerValue(define _name){
+    public MenuTriggerValue(ref define _name){
         name = _name;
     }
 

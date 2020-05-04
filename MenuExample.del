@@ -115,8 +115,3 @@ if(buttonActive)
 {
     BigMessage(AllPlayers(), "Button pressed");
 }
-
-
-
-
-//ValueInArray(["test", 5+x*2, Value], IndexOf([opt1identifier, opt2identifier, opt3identifier], ValueInArray(classIdentifiers, currentClassIdentifier)))
