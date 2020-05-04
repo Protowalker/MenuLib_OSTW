@@ -1,7 +1,10 @@
+//First, we have to import the Menu library. We should have Menu.del and Trigger.del in the same directory.
 import "Menu.del";
 
+//We have to create a variable that represents the menu
 playervar Menu settingsMenu;
 
+//in order to create an easily usable reference to a variable, we just make a macro as follows, where the index is which item in the Menu you're trying to access, by order the items were registered.
 public define pivotPoint: settingsMenu.options[0].CurrentValue.Value;
 public define buttonActive: settingsMenu.options[3].CurrentValue.Value;
 public define speed: settingsMenu.options[2].CurrentValue.Value;
@@ -9,37 +12,50 @@ public define speed: settingsMenu.options[2].CurrentValue.Value;
 rule: "make menu"
 Event.OngoingPlayer
 {
+    //Initialize the menu and pass it the player who controls and sees it.
     settingsMenu = new Menu(EventPlayer());
 
-    MenuOptionValue val1 = MenuOptionValue.GenerateValue(Vector(0,0,0), "Bottom left");
-    MenuOptionValue val2 = MenuOptionValue.GenerateValue(Vector(0.5,0.5,0.5), "Center");
-    MenuOptionValue val3 = MenuOptionValue.GenerateValue(Vector(1,1,1), "Top Right");
 
-    MenuListOption option1 = new MenuListOption([val1, val2, val3]);
+    //There are several types of menu options: as of writing this, there are Lists, floats, and buttons.
+    //In order to create a list option, we need to create it and then pass values to its AddOptionValue() function:
+    MenuListOption option1 = new MenuListOption();
+    
+    //We pass the value followed by its associated name.
+    option1.AddOptionValue(Vector(0,0,0), "Bottom left");
+    option1.AddOptionValue(Vector(0.5,0.5,0.5), "Center");
+    option1.AddOptionValue(Vector(1,1,1), "Top Right");
 
-    MenuOptionValue val4 = MenuOptionValue.GenerateValue("TestString", "First Option");
-    MenuOptionValue val5 = MenuOptionValue.GenerateValue("TestString2", "Second Option");
-    MenuOptionValue val6 = MenuOptionValue.GenerateValue("TestString3", "Third Option");
+    //You can also create it by passing the MenuOptionValues as an array to the constructor.
+    MenuOptionValue val4 = new MenuOptionValue("TestString", "First Option");
+    MenuOptionValue val5 = new MenuOptionValue("TestString2", "Second Option");
+    MenuOptionValue val6 = new MenuOptionValue("TestString3", "Third Option");
 
     MenuListOption option2 = new MenuListOption([val4, val5, val6]);
 
+    //Lists aren't the only type of option you can create. There are also float options, which let users change number values,
     MenuFloatOption option3 = new MenuFloatOption("Speed", 100, 0, 500);
-
+    //And button options, which let users trigger events.
     MenuButtonOption option4 = new MenuButtonOption("Button");
 
+    //To register one of these menu options, just pass it to the RegisterMenuOption function.
     settingsMenu.RegisterMenuOption(option1);
     settingsMenu.RegisterMenuOption(option2);
     settingsMenu.RegisterMenuOption(option3);
     settingsMenu.RegisterMenuOption(option4);
 
+    //The top right corner of the screen will show the value of option1 due to the macro we defined at the top of the file.
     CreateHudText(EventPlayer(), pivotPoint, null, null, Location.Right, 0, Color.White, Color.White, Color.White, HudTextRev.VisibleToSortOrderAndString, Spectators.DefaultVisibility);
 }
 
+
+//You need to create a rule that decides when to open and close the menu.
 rule: "Player opens/closes menu"
 Event.OngoingPlayer
 if(IsButtonHeld(EventPlayer(), Button.Interact))
 {
+    //Setting this variable to true or false is what decides if the menu is visible.
     settingsMenu.enabled = !settingsMenu.enabled;
+    //In addition to setting this variable, you should also do any setup you need to, like setting player movement speed or disabling all buttons while the menu is open.
     if(settingsMenu.enabled){
         SetMoveSpeed(EventPlayer(), 0);
     } else {
@@ -47,16 +63,23 @@ if(IsButtonHeld(EventPlayer(), Button.Interact))
     }
 }
 
+//You also need to add a rule for when the player is moving through the menu.
 rule: "Player moves through menu"
 Event.OngoingPlayer
+//Check if the menu is open so it doesn't get changed when the player is trying to play!
 if(settingsMenu.enabled)
+//Here, we're using the movement of the player to move through the menu. The Z axis of the throttle is up and down.
 if(ZOf(ThrottleOf(EventPlayer())) != 0)
+//Because we're using reload as the buttonoption activator, we should check if this button is being held before doing anything. The menu can bug out without this!
 if(!IsButtonHeld(EventPlayer(), Button.Reload)){
     define sign = ZOf(ThrottleOf(EventPlayer())) > 0 ? -1:1;
+    //menu.modifycurrentoptionindex will change the current index by its passed value.
+    //You can set it directly as well; just call setcurrentoptionindex. Both these methods will make sure that the current option index won't leave the bounds of the list.
     settingsMenu.ModifyCurrentOptionIndex(sign);
 }
 
 
+//Here, we do the exact same thing, but instead of modifying the pointer index in the menu, we modify the value of the current option.
 rule: "Player moves through values"
 Event.OngoingPlayer
 if(settingsMenu.enabled)
@@ -65,17 +88,26 @@ if(XOf(ThrottleOf(EventPlayer())) != 0){
     settingsMenu.CurrentOption.ModifyCurrentValue(sign);
 }
 
+
+//If you use menu buttons, you have to check for these cases separately.
 rule: "Player activates button value"
 Event.OngoingPlayer
 if(settingsMenu.enabled)
+//We have to check if the type of the selected option is equal to MenuButtonOption; we can do this with the `is` keyword.
 if(settingsMenu.CurrentOption is MenuButtonOption)
+//Here we're using the reload button, but any condition can be used.
 if(IsButtonHeld(EventPlayer(), Button.Reload)){
+    //We have to cast the current option as a menubuttonoption and then call its activate method.
     (<MenuButtonOption>settingsMenu.CurrentOption).Activate();
 }
 
+
+//Here's how we see if a button's been pressed.
 rule: "trigger test"
 Event.OngoingPlayer
+//Once again we're using a macro to make it easier to access this value.
 if(buttonActive)
+//If we hadn't used this macro, we would have called settingsMenu.options[3].CurrentValue.Value
 {
     BigMessage(AllPlayers(), "Button pressed");
 }

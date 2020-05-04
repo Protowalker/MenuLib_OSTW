@@ -61,9 +61,16 @@ class MenuListOption : MenuOption {
 
     public override define DisplayName: CurrentValue.Name;
 
+    public MenuListOption(){
+
+    }
 
     public MenuListOption(ref MenuOptionValue[] _values){
         values = _values;
+    }
+
+    public void AddOptionValue(ref define _value, ref define _name){
+        values = Append(values, new MenuOptionValue(_value, _name));
     }
 
     public void AddOptionValue(ref MenuOptionValue val){
