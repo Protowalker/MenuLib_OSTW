@@ -2,7 +2,7 @@
 import "Menu.del";
 
 //We have to create a variable that represents the menu
-playervar Menu settingsMenu;
+playervar SingleHUDMenu settingsMenu;
 
 //in order to create an easily usable reference to a variable, we just make a macro as follows, where the index is which item in the Menu you're trying to access, by order the items were registered.
 public define pivotPoint: settingsMenu.options[0].CurrentValue.Value;
@@ -13,7 +13,7 @@ rule: "make menu"
 Event.OngoingPlayer
 {
     //Initialize the menu and pass it the player who controls and sees it.
-    settingsMenu = new Menu(EventPlayer());
+    settingsMenu = new SingleHUDMenu(EventPlayer());
 
 
     //There are several types of menu options: as of writing this, there are Lists, floats, and buttons.
