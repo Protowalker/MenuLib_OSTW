@@ -1,0 +1,81 @@
+import "Menu.del";
+
+playervar Menu settingsMenu;
+
+public define pivotPoint: settingsMenu.options[0].CurrentValue.Value;
+public define buttonActive: settingsMenu.options[3].CurrentValue.Value;
+public define speed: settingsMenu.options[2].CurrentValue.Value;
+
+rule: "make menu"
+Event.OngoingPlayer
+{
+    settingsMenu = new Menu(EventPlayer());
+
+    MenuOptionValue val1 = MenuOptionValue.GenerateValue(Vector(0,0,0), "Bottom left");
+    MenuOptionValue val2 = MenuOptionValue.GenerateValue(Vector(0.5,0.5,0.5), "Center");
+    MenuOptionValue val3 = MenuOptionValue.GenerateValue(Vector(1,1,1), "Top Right");
+
+    MenuListOption option1 = new MenuListOption([val1, val2, val3]);
+
+    MenuOptionValue val4 = MenuOptionValue.GenerateValue("TestString", "First Option");
+    MenuOptionValue val5 = MenuOptionValue.GenerateValue("TestString2", "Second Option");
+    MenuOptionValue val6 = MenuOptionValue.GenerateValue("TestString3", "Third Option");
+
+    MenuListOption option2 = new MenuListOption([val4, val5, val6]);
+
+    MenuFloatOption option3 = new MenuFloatOption("Speed", 100, 0, 500);
+
+    MenuButtonOption option4 = new MenuButtonOption("Button");
+
+    settingsMenu.RegisterMenuOption(option1);
+    settingsMenu.RegisterMenuOption(option2);
+    settingsMenu.RegisterMenuOption(option3);
+    settingsMenu.RegisterMenuOption(option4);
+
+    CreateHudText(EventPlayer(), pivotPoint, null, null, Location.Right, 0, Color.White, Color.White, Color.White, HudTextRev.VisibleToSortOrderAndString, Spectators.DefaultVisibility);
+}
+
+rule: "Player opens/closes menu"
+Event.OngoingPlayer
+if(IsButtonHeld(EventPlayer(), Button.Interact))
+{
+    settingsMenu.enabled = !settingsMenu.enabled;
+    if(settingsMenu.enabled){
+        SetMoveSpeed(EventPlayer(), 0);
+    } else {
+        SetMoveSpeed(EventPlayer(), speed);
+    }
+}
+
+rule: "Player moves through menu"
+Event.OngoingPlayer
+if(settingsMenu.enabled)
+if(ZOf(ThrottleOf(EventPlayer())) != 0)
+if(!IsButtonHeld(EventPlayer(), Button.Reload)){
+    define sign = ZOf(ThrottleOf(EventPlayer())) > 0 ? -1:1;
+    settingsMenu.ModifyCurrentOptionIndex(sign);
+}
+
+
+rule: "Player moves through values"
+Event.OngoingPlayer
+if(settingsMenu.enabled)
+if(XOf(ThrottleOf(EventPlayer())) != 0){
+    define sign = XOf(ThrottleOf(EventPlayer())) > 0 ? -1:1;
+    settingsMenu.CurrentOption.ModifyCurrentValue(sign);
+}
+
+rule: "Player activates button value"
+Event.OngoingPlayer
+if(settingsMenu.enabled)
+if(settingsMenu.CurrentOption is MenuButtonOption)
+if(IsButtonHeld(EventPlayer(), Button.Reload)){
+    (<MenuButtonOption>settingsMenu.CurrentOption).Activate();
+}
+
+rule: "trigger test"
+Event.OngoingPlayer
+if(buttonActive)
+{
+    BigMessage(AllPlayers(), "Button pressed");
+}

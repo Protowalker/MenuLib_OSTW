@@ -1,0 +1,11 @@
+class Trigger {
+    define isActive = false;
+
+    public define IsActive: isActive;
+
+    public void Activate(){
+        isActive = true;
+        MinWait();
+        isActive = false;
+    }
+}

@@ -1,0 +1,201 @@
+import "Trigger.del";
+
+//Menus
+struct Menu 
+ {
+    public MenuOption[] options = [];
+
+    public MenuOptionValue CurrentOptionValue: CurrentOption.CurrentValue;
+    public MenuOption CurrentOption: options[currentOptionIndex];
+
+    public define currentOptionIndex;
+
+    public define enabled;
+
+    define subscribedPlayer;
+
+    public Menu(ref define player){
+        subscribedPlayer = player;
+    }
+    
+    void RegisterMenuOption(ref MenuOption option){
+        option.index = CountOf(options);
+        options = Append(options, option);
+        
+        CreateHudText(enabled?subscribedPlayer:null, <"<0><1>", currentOptionIndex==option.index?IconString(Icon.ArrowRight):"",option.DisplayName>, null, null, Location.Left, option.index, Color.Red, Color.White, Color.White, HudTextRev.VisibleToSortOrderAndString, Spectators.DefaultVisibility);
+        option.textId = LastTextID();
+    }   
+
+    public void SetCurrentOptionIndex(ref define index){
+        currentOptionIndex = RoundToInteger((Max(Min(CountOf(options), index), -1)), Rounding.Down);
+        if(currentOptionIndex <= -1)
+            currentOptionIndex = CountOf(options) - 1;
+        else if(currentOptionIndex >= CountOf(options)){
+            currentOptionIndex = 0;
+        }
+    }
+
+    public void ModifyCurrentOptionIndex(ref define difference){
+        SetCurrentOptionIndex(currentOptionIndex + difference);
+    }
+}
+//End of Menus
+
+
+//MenuOptions
+
+// enum MenuOptionType {
+//     NullMenuOption,
+//     Button,
+//     Float,
+//     List
+//}
+
+class MenuListOption : MenuOption {
+
+    public MenuOptionValue[] values = [];
+
+    public override MenuOptionValue CurrentValue: values[currentValueIndex];
+    
+    public define currentValueIndex;
+
+    public override define DisplayName: CurrentValue.Name;
+
+
+    public MenuListOption(ref MenuOptionValue[] _values){
+        values = _values;
+    }
+
+    public void AddOptionValue(ref MenuOptionValue val){
+        values = Append(values, val);
+    }
+
+    public override void SetCurrentValue(ref define _index){
+        currentValueIndex = RoundToInteger((Max(Min(CountOf(values), _index), -1)), Rounding.Down);
+        if(currentValueIndex <= -1)
+            currentValueIndex = CountOf(values) - 1;
+        else if(currentValueIndex >= CountOf(values)){
+            currentValueIndex = 0;
+        }
+    }
+
+    public override void ModifyCurrentValue(ref define difference){
+        SetCurrentValue(currentValueIndex + difference);
+    }
+
+}
+
+class MenuFloatOption : MenuOption {
+
+    private MenuOptionValue value;
+    public override MenuOptionValue CurrentValue: value;
+
+    public override define DisplayName: <"<0>: <1>", value.Name, value.Value>; 
+
+    private define min;
+    private define max;
+
+    public MenuFloatOption(ref define name, ref define startingValue, ref define _min, ref define _max){
+        value = MenuOptionValue.GenerateValue(startingValue, name);
+        min = _min;
+        max = _max;
+    }
+
+    public override void SetCurrentValue(ref define newVal){
+        value.SetValue(Min(max, Max(min, newVal)));
+    }
+
+     public override void ModifyCurrentValue(ref define difference){
+         SetCurrentValue(value.Value+difference);
+    }
+
+}
+
+class MenuButtonOption : MenuOption {
+
+    private MenuTriggerValue value;
+
+    public override MenuTriggerValue CurrentValue: value;
+
+    public override define DisplayName: value.Name;
+
+    public define IsActive: value.Value;
+
+
+    public MenuButtonOption(define _name){
+        value = new MenuTriggerValue(_name);
+    }
+
+    public void Activate(){
+        value.Activate();
+    }
+
+}
+
+class MenuOption {
+
+    public define index;
+    public define textId;
+
+
+    public virtual define DisplayName: null;
+
+    public virtual MenuOptionValue CurrentValue: null;
+
+    public virtual void SetCurrentValue(ref define newVal){
+    }
+
+    public virtual void ModifyCurrentValue(ref define difference){
+    }
+}
+//End of MenuOptions
+
+
+//MenuOptionValues
+struct MenuTriggerValue : MenuOptionValue {
+
+    Trigger trigger = new Trigger();
+
+    public define IsActive: trigger.IsActive;
+
+    public override define Value: trigger.IsActive;
+
+
+    public MenuTriggerValue(define _name){
+        name = _name;
+    }
+
+   public void Activate(){
+        trigger.Activate();
+    }
+
+    public override void SetValue(ref define newValue){}
+}
+
+struct MenuOptionValue {
+    protected define value;
+    protected define name;
+
+    public virtual define Value: value;
+    public virtual define Name: name;
+
+
+    public MenuOptionValue(ref define _value, ref define _name){
+        value = _value;
+        name = _name;
+    } 
+
+    public static MenuOptionValue GenerateValue(ref define _value, ref define _name){
+        MenuOptionValue menOptVal = new MenuOptionValue(_value, _name);
+        
+        return menOptVal;
+    }
+
+    public virtual void SetValue(ref define newValue){
+        value = newValue;
+    }
+}
+//End Of MenuOptionValues
+
+
+
