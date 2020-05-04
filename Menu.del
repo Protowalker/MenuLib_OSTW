@@ -1,9 +1,12 @@
 import "Trigger.del";
 
 //Menus
+
+globalvar define stringConstants = ["", "\r\n"];
+
 struct SingleHUDMenu : Menu {
 
-    define HUDOption(ref define index): <"<0><1><2>", currentOptionIndex==index?IconString(Icon.ArrowRight):"", (options[index] != "") ? options[index].DisplayName:"", (options[index] != "" && options[index+1] != "") ? "\r\n" : "">; 
+    define HUDOption(ref define index): <"<0><1><2>", currentOptionIndex==index?IconString(Icon.ArrowRight):root.stringConstants[0], (options[index] != root.stringConstants[0]) ? options[index].DisplayName:root.stringConstants[0], options[index+1] != root.stringConstants[0] ? root.stringConstants[1] : root.stringConstants[0]>;
     define HUDTextChunk(ref define first, ref define second, ref define third): <"<0><1><2>", first, second, third>;
 
 
@@ -63,8 +66,7 @@ struct SingleHUDMenu : Menu {
 
 }
 
-struct Menu 
- {
+struct Menu {
     public MenuOption[] options = [];
 
     public MenuOptionValue CurrentOptionValue: CurrentOption.CurrentValue;
@@ -132,7 +134,7 @@ class MenuListOption : MenuOption {
     }
 
     public void AddOptionValue(ref define _value, ref define _name){
-        values = Append(values, new MenuOptionValue(_value, _name));
+        values = Append(values, new AbstractMenuOptionValue(_value, _name));
     }
 
     public void AddOptionValue(ref MenuOptionValue val){
@@ -165,7 +167,7 @@ class MenuFloatOption : MenuOption {
     private define max;
 
     public MenuFloatOption(ref define name, ref define startingValue, ref define _min, ref define _max){
-        value = MenuOptionValue.GenerateValue(startingValue, name);
+        value = new MenuOptionValue(startingValue, name);
         min = _min;
         max = _max;
     }
@@ -221,13 +223,13 @@ class MenuOption {
 
 
 //MenuOptionValues
-struct MenuTriggerValue : MenuOptionValue {
+struct MenuTriggerValue : AbstractMenuOptionValue {
 
     Trigger trigger = new Trigger();
 
     public define IsActive: trigger.IsActive;
 
-    public override define Value: trigger.IsActive;
+    //public override define Value: trigger.IsActive;
 
 
     public MenuTriggerValue(define _name){
@@ -235,30 +237,40 @@ struct MenuTriggerValue : MenuOptionValue {
     }
 
    public void Activate(){
+        value = true;
         trigger.Activate();
+        value = false;
     }
 
     public override void SetValue(ref define newValue){}
 }
 
-struct MenuOptionValue {
-    protected define value;
-    protected define name;
-
-    public virtual define Value: value;
-    public virtual define Name: name;
-
-
+struct MenuOptionValue : AbstractMenuOptionValue {
+    
     public MenuOptionValue(ref define _value, ref define _name){
         value = _value;
         name = _name;
     } 
+}
 
-    public static MenuOptionValue GenerateValue(ref define _value, ref define _name){
-        MenuOptionValue menOptVal = new MenuOptionValue(_value, _name);
+struct AbstractMenuOptionValue {
+    protected define value;
+    protected define name;
+
+    public define Value: value;
+    public define Name: name;
+
+
+    public AbstractMenuOptionValue(ref define _value, ref define _name){
+        value = _value;
+        name = _name;
+    } 
+
+    // public static MenuOptionValue GenerateValue(ref define _value, ref define _name){
+    //     MenuOptionValue menOptVal = new MenuOptionValue(_value, _name);
         
-        return menOptVal;
-    }
+    //     return menOptVal;
+    // }
 
     public virtual void SetValue(ref define newValue){
         value = newValue;
