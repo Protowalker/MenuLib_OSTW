@@ -4,54 +4,27 @@ import "Trigger.del";
 
 public define stringConstants: ["", "\r\n"];
 
-struct SingleHUDMenu : Menu {
+struct SingleHUDMenu : AbstractMenu {
 
-    define HUDOption(ref define index): <"<0><1><2>", currentOptionIndex==index ? IconString(Icon.ArrowRight) : root.stringConstants[0], (options[index] != root.stringConstants[0]) ? options[index].DisplayName:root.stringConstants[0], options[index+1] != root.stringConstants[0] ? root.stringConstants[1] : root.stringConstants[0]>;
+    define HUDOption(ref define index): <"<0><1><2>", currentOptionIndex==index ? IconString(Icon.ArrowRight) : root.stringConstants[0], (options[index] != root.stringConstants[0]) ? options[index].DisplayName:root.stringConstants[0], options[index+1] != null ? root.stringConstants[1] : root.stringConstants[0]>;
     define HUDTextChunk(ref define first = null, ref define second = null, ref define third = null): <"<0><1><2>", first, second, third>;
 
 
     define valueCount = 0;
 
+    define optionString;
+
     public SingleHUDMenu(ref define player){
-        for(define i = 0; i < 18; i++){
-            options[i] = "";
-        }
         subscribedPlayer = player;
-        CreateHudText(enabled?subscribedPlayer:null, HUDTextChunk(
-                                                                HUDTextChunk(
-                                                                    HUDTextChunk(
-                                                                        HUDOption(0), 
-                                                                        HUDOption(1), 
-                                                                        HUDOption(2)), 
-                                                                    HUDTextChunk(
-                                                                        HUDOption(3), 
-                                                                        HUDOption(4), 
-                                                                        HUDOption(5)), 
-                                                                    HUDTextChunk(
-                                                                        HUDOption(6), 
-                                                                        HUDOption(7), 
-                                                                        HUDOption(8))),
-                                                                HUDTextChunk(
-                                                                    HUDTextChunk(
-                                                                        HUDOption(9), 
-                                                                        HUDOption(10), 
-                                                                        HUDOption(11)), 
-                                                                    HUDTextChunk(
-                                                                        HUDOption(12), 
-                                                                        HUDOption(13), 
-                                                                        HUDOption(14)), 
-                                                                    HUDTextChunk(
-                                                                        HUDOption(15), 
-                                                                        HUDOption(16), 
-                                                                        HUDOption(17))), 
-                                                                ""), null, null, Location.Left, 0, Color.Red, Color.White, Color.White, HudTextRev.VisibleToSortOrderAndString, Spectators.DefaultVisibility);
+        CreateHudText(enabled?subscribedPlayer:null, optionString, null, null, Location.Left, 0, Color.Red, Color.White, Color.White, HudTextRev.VisibleToSortOrderAndString, Spectators.DefaultVisibility);
+        UpdateMenu();
     }
 
     public override void RegisterMenuOption(ref MenuOption option){
         option.index = valueCount;
         options[valueCount] = option;
         valueCount += 1;
-        
+        UpdateMenu();
     }
 
 
@@ -62,11 +35,47 @@ struct SingleHUDMenu : Menu {
         else if(currentOptionIndex >= valueCount){
             currentOptionIndex = 0;
         }
+        UpdateMenu();
+    }
+
+    public void UpdateMenu() "[Subroutine] Update Single-HUD Menu"{
+        optionString = "";
+        for(define i = 0; i < CountOf(options); i++){
+            optionString = <"<0><1>", optionString, HUDOption(i)>;
+        }
     }
 
 }
 
-struct Menu {
+
+struct MultiHUDMenu : AbstractMenu{
+
+    public MultiHUDMenu(ref define player){
+        subscribedPlayer = player;
+    }
+
+    public override void RegisterMenuOption(ref MenuOption option){
+        option.index = CountOf(options);
+        options = Append(options, option);
+        
+        CreateHudText(enabled?subscribedPlayer:null, HUDOption(option), null, null, Location.Left, option.index, Color.Red, Color.White, Color.White, HudTextRev.VisibleToSortOrderAndString, Spectators.DefaultVisibility);
+
+        option.textId = LastTextID();
+    }   
+
+    public override void SetCurrentOptionIndex(ref define index){
+        currentOptionIndex = RoundToInteger((Max(Min(CountOf(options), index), -1)), Rounding.Down);
+        if(currentOptionIndex <= -1)
+            currentOptionIndex = CountOf(options) - 1;
+        else if(currentOptionIndex >= CountOf(options)){
+            currentOptionIndex = 0;
+        }
+
+    }
+
+}
+
+struct AbstractMenu {
     public MenuOption[] options = [];
 
     public AbstractMenuOptionValue CurrentOptionValue: CurrentOption.CurrentValue;
@@ -78,25 +87,19 @@ struct Menu {
 
     protected define subscribedPlayer;
 
+    define optionStrings = [];
+
+    define HUDOption(ref MenuOption option): <"<0><1>", currentOptionIndex==option.index?IconString(Icon.ArrowRight):"",option.DisplayName>;
+
+
     public Menu(ref define player){
         subscribedPlayer = player;
     }
-    
+
     public virtual void RegisterMenuOption(ref MenuOption option){
-        option.index = CountOf(options);
-        options = Append(options, option);
-        
-        CreateHudText(enabled?subscribedPlayer:null, <"<0><1>", currentOptionIndex==option.index?IconString(Icon.ArrowRight):"",option.DisplayName>, null, null, Location.Left, option.index, Color.Red, Color.White, Color.White, HudTextRev.VisibleToSortOrderAndString, Spectators.DefaultVisibility);
-        option.textId = LastTextID();
     }   
 
     public virtual void SetCurrentOptionIndex(ref define index){
-        currentOptionIndex = RoundToInteger((Max(Min(CountOf(options), index), -1)), Rounding.Down);
-        if(currentOptionIndex <= -1)
-            currentOptionIndex = CountOf(options) - 1;
-        else if(currentOptionIndex >= CountOf(options)){
-            currentOptionIndex = 0;
-        }
     }
 
     public void ModifyCurrentOptionIndex(ref define difference){
@@ -134,7 +137,7 @@ struct MenuListOption : MenuOption {
     }
 
     public void AddOptionValue(ref define _value, ref define _name){
-        values = Append(values, new AbstractMenuOptionValue(_value, _name));
+        values = Append(values, new MenuOptionValue(_value, _name));
     }
 
     public void AddOptionValue(ref MenuOptionValue val){
@@ -256,12 +259,6 @@ struct AbstractMenuOptionValue {
 
     public define Value: value;
     public define Name: name;
-
-
-    public AbstractMenuOptionValue(ref define _value, ref define _name){
-        value = _value;
-        name = _name;
-    } 
 
     // public static MenuOptionValue GenerateValue(ref define _value, ref define _name){
     //     MenuOptionValue menOptVal = new MenuOptionValue(_value, _name);
