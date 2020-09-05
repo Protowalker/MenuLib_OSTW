@@ -4,6 +4,10 @@ class Trigger {
     public define IsActive: isActive;
 
     public void Activate(){
+        async! _Activate();
+    }
+    
+    private void _Activate() "Activate Subroutine" {
         isActive = true;
         MinWait();
         isActive = false;
